@@ -119,6 +119,11 @@ public class HereFragment extends Fragment {
         if (!hidden && mapView != null) {
             mapView.invalidate();
             startLocationUpdates();
+            // Clear stale LoS lines from previous visit; redraw once location and sites are ready
+            for (Polyline p : losLines) mapView.getOverlays().remove(p);
+            losLines.clear();
+            mapView.invalidate();
+            if (hereLocation != null && sitesLoaded) drawLoS();
         } else if (hidden) {
             stopLocationUpdates();
         }
