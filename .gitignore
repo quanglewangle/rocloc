@@ -13,3 +13,5 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+keystore.properties
+app/rocloc-release.jks
