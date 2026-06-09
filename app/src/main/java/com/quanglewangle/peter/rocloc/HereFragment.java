@@ -373,7 +373,7 @@ public class HereFragment extends Fragment {
             downloadBtn.setVisibility(View.GONE);
         } else {
             downloadBtn.setVisibility(View.VISIBLE);
-            downloadBtn.setText("Download terrain (offline LoS)");
+            downloadBtn.setText("Tap to download terrain for offline LoS");
         }
     }
 
