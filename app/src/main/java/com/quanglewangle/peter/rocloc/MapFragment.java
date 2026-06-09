@@ -56,8 +56,8 @@ public class MapFragment extends Fragment {
         mapView = view.findViewById(R.id.mapView);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
-        mapView.getController().setZoom(6.0);
-        mapView.getController().setCenter(new GeoPoint(54.0, -2.0));
+        mapView.getController().setZoom(6.5);
+        mapView.getController().setCenter(new GeoPoint(54.5, -3.0));
 
         mapView.getOverlays().add(new org.osmdroid.views.overlay.MapEventsOverlay(
                 new org.osmdroid.events.MapEventsReceiver() {
@@ -67,7 +67,7 @@ public class MapFragment extends Fragment {
                     @Override public boolean longPressHelper(GeoPoint p) { return false; }
                 }));
 
-        if (!sitesLoaded) loadSites(true);
+        if (!sitesLoaded) loadSites(false);
     }
 
     @Override public void onResume() {
@@ -84,7 +84,7 @@ public class MapFragment extends Fragment {
         super.onHiddenChanged(hidden);
         if (!hidden && mapView != null) {
             if (!sitesLoaded) {
-                loadSites(true);
+                loadSites(false);
             } else {
                 mapView.invalidate();
             }
