@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
 
+import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
@@ -37,6 +38,7 @@ public class MapFragment extends Fragment {
 
     private List<Site> allSites = new ArrayList<>();
     private final List<Polyline> losOverlays = new ArrayList<>();
+    private RadiusMarkerClusterer clusterOverlay;
     private boolean sitesLoaded = false;
 
     @Nullable @Override
@@ -78,6 +80,17 @@ public class MapFragment extends Fragment {
         if (mapView != null) mapView.onPause();
     }
 
+    @Override public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden && mapView != null) {
+            if (!sitesLoaded) {
+                loadSites(true);
+            } else {
+                mapView.invalidate();
+            }
+        }
+    }
+
     public void goToSite(Site site) {
         if (mapView == null) return;
         clearLoS();
@@ -104,9 +117,12 @@ public class MapFragment extends Fragment {
     }
 
     private void rebuildMarkers(boolean fitBounds) {
-        // Remove existing site markers (keep map events overlay at index 0)
-        while (mapView.getOverlays().size() > 1) mapView.getOverlays().remove(1);
+        // Remove old cluster overlay (keep map events overlay at index 0)
+        if (clusterOverlay != null) mapView.getOverlays().remove(clusterOverlay);
         losOverlays.clear();
+
+        clusterOverlay = new RadiusMarkerClusterer(requireContext());
+        clusterOverlay.setRadius(100);
 
         List<GeoPoint> points = new ArrayList<>();
         for (Site s : allSites) {
@@ -117,18 +133,18 @@ public class MapFragment extends Fragment {
             m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             m.setTitle(s.displayCallsign());
             m.setSnippet(s.isPin() ? "Pin" : safe(s.name));
-            if (s.isPin()) {
-                m.getIcon().setTint(Color.rgb(34, 197, 94));  // green
-            }
+            if (s.isPin()) m.getIcon().setTint(Color.rgb(34, 197, 94));
             final Site site = s;
             m.setOnMarkerClickListener((marker, map) -> {
                 marker.showInfoWindow();
                 fetchLoS(site);
                 return true;
             });
-            mapView.getOverlays().add(m);
+            clusterOverlay.add(m);
             points.add(gp);
         }
+
+        mapView.getOverlays().add(clusterOverlay);
 
         if (fitBounds && points.size() > 1) {
             BoundingBox box = BoundingBox.fromGeoPoints(points);

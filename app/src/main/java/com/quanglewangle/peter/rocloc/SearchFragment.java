@@ -26,8 +26,13 @@ import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SearchFragment extends Fragment {
+
+    // UK amateur radio callsigns: G*, M*, or 2* prefix + digit + 1-4 letters
+    private static final Pattern UK_CALLSIGN =
+            Pattern.compile("^(G[A-Z]?|M[A-Z]?|2[A-Z])[0-9][A-Z]{1,4}$", Pattern.CASE_INSENSITIVE);
 
     private Repository repository;
     private OperatorListAdapter adapter;
@@ -82,6 +87,10 @@ public class SearchFragment extends Fragment {
     private void performSearch() {
         String input = callsignInput.getText().toString().trim().toUpperCase();
         if (input.isEmpty()) return;
+        if (!UK_CALLSIGN.matcher(input).matches()) {
+            Snackbar.make(requireView(), "UK callsigns only (G, M, 2…)", Snackbar.LENGTH_LONG).show();
+            return;
+        }
         progressBar.setVisibility(View.VISIBLE);
         repository.lookup(input, false, new Repository.LookupCallback() {
             @Override public void onResult(OperatorEntity entity, boolean fromCache) {
