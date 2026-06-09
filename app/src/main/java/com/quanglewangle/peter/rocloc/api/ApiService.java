@@ -79,6 +79,16 @@ public class ApiService {
         void onError(String error);
     }
 
+    public interface TileListCallback {
+        void onResult(List<String> tileCodes);
+        void onError(String error);
+    }
+
+    public interface TileDataCallback {
+        void onResult(byte[] data);
+        void onError(String error);
+    }
+
     private final OkHttpClient client = new OkHttpClient();
 
     public void lookup(String callsign, Callback callback) {
@@ -208,6 +218,48 @@ public class ApiService {
                     callback.onResult(result);
                 } catch (Exception ex) {
                     callback.onError("Parse error: " + ex.getMessage());
+                }
+            }
+        });
+    }
+
+    public void getTerrainTileList(double lat, double lon, double radiusKm, TileListCallback callback) {
+        String url = String.format(java.util.Locale.US,
+                "https://fimblefowl.co.uk/qrz/terrain/tiles?lat=%f&lon=%f&radius_km=%.0f",
+                lat, lon, radiusKm);
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                callback.onError("Network: " + e.getMessage());
+            }
+            @Override public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    String body = response.body().string();
+                    JSONArray arr = new JSONArray(body);
+                    List<String> codes = new ArrayList<>();
+                    for (int i = 0; i < arr.length(); i++) codes.add(arr.getString(i));
+                    callback.onResult(codes);
+                } catch (Exception ex) {
+                    callback.onError("Parse error: " + ex.getMessage());
+                }
+            }
+        });
+    }
+
+    public void getTerrainTile(String code, TileDataCallback callback) {
+        String url = "https://fimblefowl.co.uk/qrz/terrain/tile/" + code.toUpperCase();
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                callback.onError("Network: " + e.getMessage());
+            }
+            @Override public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    if (!response.isSuccessful()) {
+                        callback.onError("HTTP " + response.code());
+                        return;
+                    }
+                    callback.onResult(response.body().bytes());
                 }
             }
         });

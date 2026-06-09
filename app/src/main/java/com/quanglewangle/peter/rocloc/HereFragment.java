@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -30,6 +31,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.terrain.TerrainEngine;
+import com.quanglewangle.peter.rocloc.terrain.TerrainStore;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -38,17 +41,24 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HereFragment extends Fragment {
 
+    private static final double DOWNLOAD_RADIUS_KM = 40;
+
     private MapView mapView;
     private ProgressBar progressBar;
     private TextView statusText;
+    private Button downloadBtn;
     private final ApiService api = new ApiService();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ExecutorService bgExecutor = Executors.newCachedThreadPool();
 
     private FusedLocationProviderClient locationClient;
     private LocationCallback locationCallback;
@@ -57,6 +67,9 @@ public class HereFragment extends Fragment {
     private List<Site> allSites = new ArrayList<>();
     private final List<Polyline> losLines = new ArrayList<>();
     private boolean sitesLoaded = false;
+
+    private TerrainStore terrainStore;
+    private TerrainEngine terrainEngine;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -71,11 +84,18 @@ public class HereFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         progressBar = view.findViewById(R.id.hereProgress);
         statusText  = view.findViewById(R.id.hereStatus);
+        downloadBtn = view.findViewById(R.id.downloadTerrainBtn);
         mapView     = view.findViewById(R.id.hereMapView);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
         mapView.getController().setZoom(6.5);
         mapView.getController().setCenter(new GeoPoint(54.5, -3.0));
+
+        terrainStore  = new TerrainStore(requireContext());
+        terrainEngine = new TerrainEngine(terrainStore);
+
+        updateDownloadBtn();
+        downloadBtn.setOnClickListener(v -> downloadTerrain());
 
         locationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         statusText.setText(R.string.getting_location);
@@ -104,6 +124,8 @@ public class HereFragment extends Fragment {
         }
     }
 
+    // ── Location ─────────────────────────────────────────────────────────────
+
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -123,10 +145,8 @@ public class HereFragment extends Fragment {
         };
 
         LocationRequest req = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
-                .setMinUpdateDistanceMeters(100)
-                .build();
+                .setMinUpdateDistanceMeters(100).build();
         locationClient.requestLocationUpdates(req, locationCallback, Looper.getMainLooper());
-
         locationClient.getLastLocation().addOnSuccessListener(loc -> {
             if (loc != null && hereLocation == null) {
                 hereLocation = loc;
@@ -144,14 +164,12 @@ public class HereFragment extends Fragment {
 
     private void onLocationUpdate(Location loc, boolean first) {
         GeoPoint gp = new GeoPoint(loc.getLatitude(), loc.getLongitude());
-
         if (hereMarker == null) {
             hereMarker = dotMarker(Color.rgb(59, 130, 246));
             hereMarker.setTitle("Here");
             mapView.getOverlays().add(0, hereMarker);
         }
         hereMarker.setPosition(gp);
-
         if (first) {
             mapView.getController().animateTo(gp);
             mapView.getController().setZoom(13.0);
@@ -160,6 +178,8 @@ public class HereFragment extends Fragment {
         }
         mapView.invalidate();
     }
+
+    // ── Sites ────────────────────────────────────────────────────────────────
 
     private void loadSites() {
         progressBar.setVisibility(View.VISIBLE);
@@ -187,21 +207,57 @@ public class HereFragment extends Fragment {
         });
     }
 
+    // ── LoS ──────────────────────────────────────────────────────────────────
+
     private void drawLoS() {
         for (Polyline p : losLines) mapView.getOverlays().remove(p);
         losLines.clear();
 
         List<Site> targets = new ArrayList<>();
-        for (Site s : allSites) {
-            if (s.lat != 0 || s.lon != 0) targets.add(s);
-        }
+        for (Site s : allSites) if (s.lat != 0 || s.lon != 0) targets.add(s);
         if (targets.isEmpty() || hereLocation == null) return;
 
+        if (terrainEngine.hasTiles()) {
+            drawLoSLocal(targets);
+        } else {
+            drawLoSRemote(targets);
+        }
+    }
+
+    private void drawLoSLocal(List<Site> targets) {
+        progressBar.setVisibility(View.VISIBLE);
+        double lat1 = hereLocation.getLatitude();
+        double lon1 = hereLocation.getLongitude();
+        double elev1 = terrainEngine.elevationAt(lat1, lon1);
+        double h1 = (Double.isNaN(elev1) ? 0 : elev1) + 2.0;
+
+        bgExecutor.execute(() -> {
+            for (Site s : targets) {
+                double elev2 = terrainEngine.elevationAt(s.lat, s.lon);
+                double h2 = (Double.isNaN(elev2) ? 0 : elev2) + s.qnf;
+                TerrainEngine.LoSResult r = terrainEngine.losCheck(lat1, lon1, h1, s.lat, s.lon, h2);
+                mainHandler.post(() -> {
+                    GeoPoint from = new GeoPoint(lat1, lon1);
+                    GeoPoint to   = new GeoPoint(s.lat, s.lon);
+                    if (r.clear) {
+                        addLine(from, to, Color.rgb(34, 197, 94), 0.85f);
+                    } else if (r.obsLat != 0 || r.obsLon != 0) {
+                        GeoPoint obs = new GeoPoint(r.obsLat, r.obsLon);
+                        addLine(from, obs, Color.rgb(239, 68, 68), 0.85f);
+                        addLine(obs, to, Color.DKGRAY, 0.35f);
+                    }
+                    mapView.invalidate();
+                });
+            }
+            mainHandler.post(() -> progressBar.setVisibility(View.GONE));
+        });
+    }
+
+    private void drawLoSRemote(List<Site> targets) {
         progressBar.setVisibility(View.VISIBLE);
         AtomicInteger remaining = new AtomicInteger(targets.size());
         double lat1 = hereLocation.getLatitude();
         double lon1 = hereLocation.getLongitude();
-
         for (Site s : targets) {
             api.losCheck(lat1, lon1, s.lat, s.lon, 2.0, s.qnf,
                     new ApiService.LoSCallback() {
@@ -228,6 +284,101 @@ public class HereFragment extends Fragment {
                     });
         }
     }
+
+    // ── Terrain download ──────────────────────────────────────────────────────
+
+    private void downloadTerrain() {
+        if (hereLocation == null) {
+            statusText.setText("Waiting for GPS fix before download");
+            statusText.setVisibility(View.VISIBLE);
+            return;
+        }
+        downloadBtn.setEnabled(false);
+        statusText.setText("Fetching tile list…");
+        statusText.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
+
+        api.getTerrainTileList(hereLocation.getLatitude(), hereLocation.getLongitude(),
+                DOWNLOAD_RADIUS_KM, new ApiService.TileListCallback() {
+                    @Override public void onResult(List<String> codes) {
+                        List<String> needed = new ArrayList<>();
+                        for (String c : codes) if (!terrainStore.hasTile(c)) needed.add(c);
+                        mainHandler.post(() -> {
+                            if (needed.isEmpty()) {
+                                statusText.setText("Terrain already downloaded ✓");
+                                progressBar.setVisibility(View.GONE);
+                                downloadBtn.setEnabled(true);
+                                updateDownloadBtn();
+                                return;
+                            }
+                            downloadTiles(needed);
+                        });
+                    }
+                    @Override public void onError(String error) {
+                        mainHandler.post(() -> {
+                            statusText.setText("Could not fetch tile list: " + error);
+                            progressBar.setVisibility(View.GONE);
+                            downloadBtn.setEnabled(true);
+                        });
+                    }
+                });
+    }
+
+    private void downloadTiles(List<String> codes) {
+        int total = codes.size();
+        AtomicInteger done = new AtomicInteger(0);
+        AtomicInteger failed = new AtomicInteger(0);
+
+        for (String code : codes) {
+            api.getTerrainTile(code, new ApiService.TileDataCallback() {
+                @Override public void onResult(byte[] data) {
+                    try {
+                        terrainStore.saveTile(code, data);
+                    } catch (IOException e) {
+                        failed.incrementAndGet();
+                    }
+                    int n = done.incrementAndGet();
+                    mainHandler.post(() -> {
+                        statusText.setText("Downloaded " + n + " / " + total + " tiles");
+                        if (n == total) onDownloadComplete(failed.get());
+                    });
+                }
+                @Override public void onError(String error) {
+                    failed.incrementAndGet();
+                    int n = done.incrementAndGet();
+                    mainHandler.post(() -> {
+                        statusText.setText("Downloaded " + n + " / " + total + " tiles");
+                        if (n == total) onDownloadComplete(failed.get());
+                    });
+                }
+            });
+        }
+    }
+
+    private void onDownloadComplete(int failed) {
+        progressBar.setVisibility(View.GONE);
+        downloadBtn.setEnabled(true);
+        updateDownloadBtn();
+        int count = terrainStore.tileCount();
+        long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
+        String msg = count + " tiles on device (" + mb + " MB)";
+        if (failed > 0) msg += " — " + failed + " failed";
+        statusText.setText(msg);
+        if (hereLocation != null && sitesLoaded) drawLoS();
+    }
+
+    private void updateDownloadBtn() {
+        if (downloadBtn == null) return;
+        int count = terrainStore.tileCount();
+        if (count == 0) {
+            downloadBtn.setText("Download terrain (offline LoS)");
+        } else {
+            long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
+            downloadBtn.setText("Update terrain (" + count + " tiles, " + mb + " MB)");
+        }
+    }
+
+    // ── Drawing helpers ───────────────────────────────────────────────────────
 
     private void addLine(GeoPoint a, GeoPoint b, int color, float alpha) {
         Polyline line = new Polyline();

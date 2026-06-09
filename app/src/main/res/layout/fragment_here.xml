@@ -16,6 +16,7 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
+    <!-- Status text (GPS acquiring / download progress) -->
     <TextView
         android:id="@+id/hereStatus"
         android:layout_width="wrap_content"
@@ -28,5 +29,16 @@
         android:textColor="#FFFFFF"
         android:textSize="13sp"
         android:visibility="visible" />
+
+    <!-- Download terrain button (bottom of map) -->
+    <Button
+        android:id="@+id/downloadTerrainBtn"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:text="Download terrain (offline LoS)"
+        android:textSize="12sp" />
 
 </FrameLayout>
