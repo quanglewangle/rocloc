@@ -152,7 +152,7 @@ public class HereFragment extends Fragment {
 
         if (first) {
             mapView.getController().animateTo(gp);
-            mapView.getController().setZoom(10.0);
+            mapView.getController().setZoom(13.0);
             statusText.setVisibility(View.GONE);
             if (sitesLoaded) drawLoS();
         }
