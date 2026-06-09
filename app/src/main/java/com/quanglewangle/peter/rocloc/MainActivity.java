@@ -12,7 +12,7 @@ import com.quanglewangle.peter.rocloc.data.Site;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final Fragment[] frags = new Fragment[4];
+    private final Fragment[] frags = new Fragment[5];
     private int currentIdx = 0;
 
     @Override
@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
             case 1: return new SitesFragment();
             case 2: return new PinsFragment();
             case 3: return new MapFragment();
+            case 4: return new HereFragment();
             default: return new SearchFragment();
         }
     }
@@ -69,16 +70,17 @@ public class MainActivity extends AppCompatActivity {
         if (navId == R.id.nav_sites) return 1;
         if (navId == R.id.nav_pins)  return 2;
         if (navId == R.id.nav_map)   return 3;
+        if (navId == R.id.nav_here)  return 4;
         return 0;
     }
 
     private String tagFor(int idx) {
-        return new String[]{"search", "sites", "pins", "map"}[idx];
+        return new String[]{"search", "sites", "pins", "map", "here"}[idx];
     }
 
     private void updateTitle(int idx) {
         if (getSupportActionBar() == null) return;
-        int[] titles = {R.string.app_name, R.string.nav_sites, R.string.nav_pins, R.string.nav_map};
+        int[] titles = {R.string.app_name, R.string.nav_sites, R.string.nav_pins, R.string.nav_map, R.string.nav_here};
         getSupportActionBar().setTitle(titles[idx]);
     }
 

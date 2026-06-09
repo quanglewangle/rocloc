@@ -12,6 +12,7 @@
     <string name="nav_sites">Sites</string>
     <string name="nav_pins">Pins</string>
     <string name="nav_map">Map</string>
+    <string name="nav_here">Here</string>
     <string name="loading">Loading…</string>
     <string name="no_sites">No sites found</string>
     <string name="no_pins">No pins found</string>
