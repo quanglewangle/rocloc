@@ -357,24 +357,23 @@ public class HereFragment extends Fragment {
 
     private void onDownloadComplete(int failed) {
         progressBar.setVisibility(View.GONE);
-        downloadBtn.setEnabled(true);
-        updateDownloadBtn();
+        downloadBtn.setVisibility(View.GONE);
         int count = terrainStore.tileCount();
         long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
         String msg = count + " tiles on device (" + mb + " MB)";
         if (failed > 0) msg += " — " + failed + " failed";
         statusText.setText(msg);
+        mainHandler.postDelayed(() -> statusText.setVisibility(View.GONE), 4000);
         if (hereLocation != null && sitesLoaded) drawLoS();
     }
 
     private void updateDownloadBtn() {
         if (downloadBtn == null) return;
-        int count = terrainStore.tileCount();
-        if (count == 0) {
-            downloadBtn.setText("Download terrain (offline LoS)");
+        if (terrainStore.tileCount() > 0) {
+            downloadBtn.setVisibility(View.GONE);
         } else {
-            long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
-            downloadBtn.setText("Update terrain (" + count + " tiles, " + mb + " MB)");
+            downloadBtn.setVisibility(View.VISIBLE);
+            downloadBtn.setText("Download terrain (offline LoS)");
         }
     }
 
