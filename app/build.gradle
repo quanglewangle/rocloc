@@ -8,12 +8,12 @@ if (keystoreFile.exists()) keystoreProps.load(keystoreFile.newDataInputStream())
 
 android {
     namespace "com.quanglewangle.peter.rocloc"
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.quanglewangle.peter.rocloc"
         minSdk 24
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
