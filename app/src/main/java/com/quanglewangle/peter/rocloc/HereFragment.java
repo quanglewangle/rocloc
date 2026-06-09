@@ -213,21 +213,23 @@ public class HereFragment extends Fragment {
         for (Polyline p : losLines) mapView.getOverlays().remove(p);
         losLines.clear();
 
+        double lat1 = hereLocation.getLatitude(), lon1 = hereLocation.getLongitude();
         List<Site> targets = new ArrayList<>();
-        for (Site s : allSites) if (s.lat != 0 || s.lon != 0) targets.add(s);
+        for (Site s : allSites) {
+            if (s.lat == 0 && s.lon == 0) continue;
+            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= 70_000) targets.add(s);
+        }
         if (targets.isEmpty() || hereLocation == null) return;
 
         if (terrainEngine.hasTiles()) {
-            drawLoSLocal(targets);
+            drawLoSLocal(targets, lat1, lon1);
         } else {
-            drawLoSRemote(targets);
+            drawLoSRemote(targets, lat1, lon1);
         }
     }
 
-    private void drawLoSLocal(List<Site> targets) {
+    private void drawLoSLocal(List<Site> targets, double lat1, double lon1) {
         progressBar.setVisibility(View.VISIBLE);
-        double lat1 = hereLocation.getLatitude();
-        double lon1 = hereLocation.getLongitude();
         double elev1 = terrainEngine.elevationAt(lat1, lon1);
         double h1 = (Double.isNaN(elev1) ? 0 : elev1) + 2.0;
 
@@ -253,11 +255,9 @@ public class HereFragment extends Fragment {
         });
     }
 
-    private void drawLoSRemote(List<Site> targets) {
+    private void drawLoSRemote(List<Site> targets, double lat1, double lon1) {
         progressBar.setVisibility(View.VISIBLE);
         AtomicInteger remaining = new AtomicInteger(targets.size());
-        double lat1 = hereLocation.getLatitude();
-        double lon1 = hereLocation.getLongitude();
         for (Site s : targets) {
             api.losCheck(lat1, lon1, s.lat, s.lon, 2.0, s.qnf,
                     new ApiService.LoSCallback() {
