@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -66,7 +67,13 @@ public class MapFragment extends Fragment {
         mapView.getOverlays().add(new org.osmdroid.views.overlay.MapEventsOverlay(
                 new org.osmdroid.events.MapEventsReceiver() {
                     @Override public boolean singleTapConfirmedHelper(GeoPoint p) {
-                        clearLoS(); return true;
+                        Site nearest = nearestSite(p, 40);
+                        if (nearest != null) {
+                            fetchLoS(nearest);
+                        } else {
+                            clearLoS();
+                        }
+                        return true;
                     }
                     @Override public boolean longPressHelper(GeoPoint p) { return false; }
                 }));
@@ -136,12 +143,6 @@ public class MapFragment extends Fragment {
             m.setPosition(gp);
             m.setTitle(s.displayCallsign());
             m.setSnippet(s.isPin() ? "Pin" : safe(s.name));
-            final Site site = s;
-            m.setOnMarkerClickListener((marker, map) -> {
-                marker.showInfoWindow();
-                fetchLoS(site);
-                return true;
-            });
             clusterOverlay.add(m);
             points.add(gp);
         }
@@ -207,6 +208,24 @@ public class MapFragment extends Fragment {
         for (Polyline p : losOverlays) mapView.getOverlays().remove(p);
         losOverlays.clear();
         if (mapView != null) mapView.invalidate();
+    }
+
+    @Nullable
+    private Site nearestSite(GeoPoint tap, float thresholdDp) {
+        if (mapView == null || allSites.isEmpty()) return null;
+        float threshPx = thresholdDp * getResources().getDisplayMetrics().density;
+        Point tapPx = mapView.getProjection().toPixels(tap, null);
+        Site best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (Site s : allSites) {
+            if (s.lat == 0 && s.lon == 0) continue;
+            Point sPx = mapView.getProjection().toPixels(new GeoPoint(s.lat, s.lon), null);
+            double dx = tapPx.x - sPx.x;
+            double dy = tapPx.y - sPx.y;
+            double dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < bestDist) { bestDist = dist; best = s; }
+        }
+        return (bestDist <= threshPx) ? best : null;
     }
 
     @Nullable
