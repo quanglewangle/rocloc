@@ -16,6 +16,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.snackbar.Snackbar;
 import com.quanglewangle.peter.rocloc.data.OperatorEntity;
+import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Repository;
 import com.quanglewangle.peter.rocloc.databinding.ActivityDetailBinding;
 import com.quanglewangle.peter.rocloc.location.HereCalculator;
@@ -28,6 +29,7 @@ public class DetailActivity extends AppCompatActivity {
 
     private ActivityDetailBinding binding;
     private Repository repository;
+    private ApiService apiService;
     private FusedLocationProviderClient locationClient;
     private Handler mainHandler;
     private OperatorEntity currentEntity;
@@ -40,8 +42,9 @@ public class DetailActivity extends AppCompatActivity {
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mainHandler   = new Handler(Looper.getMainLooper());
-        repository    = new Repository(this);
+        mainHandler    = new Handler(Looper.getMainLooper());
+        repository     = new Repository(this);
+        apiService     = new ApiService();
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         String callsign = getIntent().getStringExtra(EXTRA_CALLSIGN);
@@ -137,31 +140,53 @@ public class DetailActivity extends AppCompatActivity {
         sb.append(String.format("My position\n  %s\n  %.4f°N  %.4f°E\n  Accuracy: ±%.0f m\n",
                 myGrid, myLat, myLon, me.getAccuracy()));
 
-        if (target != null) {
-            if (target.lat != 0 || target.lon != 0) {
-                double dist    = HereCalculator.distanceKm(myLat, myLon, target.lat, target.lon);
-                double bearing = HereCalculator.bearingDeg(myLat, myLon, target.lat, target.lon);
-                String compass = HereCalculator.compassPoint(bearing);
-
-                sb.append("\nTo ").append(target.callsign).append(" (").append(safe(target.grid)).append(")\n");
-                sb.append(String.format("  Distance : %.1f km%s\n",
-                        dist, dist < 1 ? " (" + (int)(dist * 1000) + " m)" : ""));
-                sb.append(String.format("  Bearing  : %.1f° T  (%s)\n", bearing, compass));
-
-                // Geometric radio horizon (no terrain data — informational only)
-                double h1 = 10.0; // assume 10 m antenna height
-                double h2 = 10.0;
-                double horizon = HereCalculator.radioHorizonKm(h1) + HereCalculator.radioHorizonKm(h2);
-                sb.append(String.format("  Horizon  : ~%.0f km @ 10 m antennas\n", horizon));
-                sb.append(dist <= horizon ? "  LoS likely (terrain not checked)\n"
-                                          : "  Beyond radio horizon\n");
-            } else {
-                sb.append("\nNo coordinates stored for ").append(target.callsign)
-                  .append("\n(server did not return lat/lon)");
+        if (target == null || (target.lat == 0 && target.lon == 0)) {
+            if (target != null) {
+                sb.append("\nNo coordinates for ").append(target.callsign);
             }
+            binding.hereSection.setText(sb.toString());
+            return;
         }
 
+        double dist    = HereCalculator.distanceKm(myLat, myLon, target.lat, target.lon);
+        double bearing = HereCalculator.bearingDeg(myLat, myLon, target.lat, target.lon);
+        String compass = HereCalculator.compassPoint(bearing);
+
+        sb.append("\nTo ").append(target.callsign).append(" (").append(safe(target.grid)).append(")\n");
+        sb.append(String.format("  Distance : %.1f km%s\n",
+                dist, dist < 1 ? " (" + (int)(dist * 1000) + " m)" : ""));
+        sb.append(String.format("  Bearing  : %.1f° T  (%s)\n", bearing, compass));
+        sb.append("  LoS      : checking terrain…\n");
         binding.hereSection.setText(sb.toString());
+
+        final double antH = 10.0;
+        apiService.losCheck(myLat, myLon, target.lat, target.lon, antH, antH,
+                new ApiService.LoSCallback() {
+            @Override public void onResult(ApiService.LoSResult r) {
+                String losLine;
+                if (r.clear) {
+                    losLine = String.format("  LoS      : CLEAR (terrain OK)\n"
+                            + "  My elev  : %.0f m ASL\n"
+                            + "  Target   : %.0f m ASL\n", r.myElev, r.targetElev);
+                } else {
+                    losLine = String.format("  LoS      : BLOCKED\n"
+                            + "  My elev  : %.0f m ASL\n"
+                            + "  Target   : %.0f m ASL\n"
+                            + "  Obstruction near %.4f°N %.4f°E\n",
+                            r.myElev, r.targetElev, r.obsLat, r.obsLon);
+                }
+                String updated = sb.toString().replace("  LoS      : checking terrain…\n", losLine);
+                mainHandler.post(() -> binding.hereSection.setText(updated));
+            }
+            @Override public void onError(String error) {
+                // Fall back to geometric horizon if terrain unavailable
+                double horizon = HereCalculator.radioHorizonKm(antH) * 2;
+                String fallback = String.format("  Horizon  : ~%.0f km (geometric, no terrain data)\n"
+                        + "  (%s)\n", horizon, error);
+                String updated = sb.toString().replace("  LoS      : checking terrain…\n", fallback);
+                mainHandler.post(() -> binding.hereSection.setText(updated));
+            }
+        });
     }
 
     @Override

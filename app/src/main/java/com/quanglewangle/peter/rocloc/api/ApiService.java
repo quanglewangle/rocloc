@@ -35,6 +35,25 @@ public class ApiService {
         void onError(String error);
     }
 
+    public static class LoSResult {
+        public final boolean clear;
+        public final double myElev;
+        public final double targetElev;
+        public final double distanceKm;
+        public final double obsLat;
+        public final double obsLon;
+        public LoSResult(boolean clear, double myElev, double targetElev,
+                         double distanceKm, double obsLat, double obsLon) {
+            this.clear = clear; this.myElev = myElev; this.targetElev = targetElev;
+            this.distanceKm = distanceKm; this.obsLat = obsLat; this.obsLon = obsLon;
+        }
+    }
+
+    public interface LoSCallback {
+        void onResult(LoSResult result);
+        void onError(String error);
+    }
+
     private final OkHttpClient client = new OkHttpClient();
 
     public void lookup(String callsign, Callback callback) {
@@ -68,6 +87,38 @@ public class ApiService {
                     } else {
                         callback.onError("Unexpected response");
                     }
+                }
+            }
+        });
+    }
+
+    public void losCheck(double lat1, double lon1, double lat2, double lon2,
+                         double h1, double h2, LoSCallback callback) {
+        String url = String.format(java.util.Locale.US,
+                "https://fimblefowl.co.uk/qrz/los?lat1=%f&lon1=%f&lat2=%f&lon2=%f&h1=%.1f&h2=%.1f",
+                lat1, lon1, lat2, lon2, h1, h2);
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                callback.onError("Network: " + e.getMessage());
+            }
+            @Override public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    String body = response.body().string();
+                    JSONObject obj = new JSONObject(body);
+                    if (obj.has("error")) {
+                        callback.onError(obj.optString("error"));
+                        return;
+                    }
+                    callback.onResult(new LoSResult(
+                            obj.optBoolean("clear"),
+                            obj.optDouble("my_elev"),
+                            obj.optDouble("target_elev"),
+                            obj.optDouble("distance_km"),
+                            obj.optDouble("obs_lat"),
+                            obj.optDouble("obs_lon")));
+                } catch (Exception ex) {
+                    callback.onError("Parse error: " + ex.getMessage());
                 }
             }
         });
