@@ -3,10 +3,16 @@ package com.quanglewangle.peter.rocloc.api;
 import android.util.Log;
 
 import com.quanglewangle.peter.rocloc.data.OperatorEntity;
+import com.quanglewangle.peter.rocloc.data.Site;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -51,6 +57,25 @@ public class ApiService {
 
     public interface LoSCallback {
         void onResult(LoSResult result);
+        void onError(String error);
+    }
+
+    public static class SitesLoSEntry {
+        public final boolean clear;
+        public final double obsLat;
+        public final double obsLon;
+        public SitesLoSEntry(boolean clear, double obsLat, double obsLon) {
+            this.clear = clear; this.obsLat = obsLat; this.obsLon = obsLon;
+        }
+    }
+
+    public interface SitesCallback {
+        void onResult(List<Site> sites);
+        void onError(String error);
+    }
+
+    public interface SitesLoSCallback {
+        void onResult(Map<String, SitesLoSEntry> result);
         void onError(String error);
     }
 
@@ -117,6 +142,70 @@ public class ApiService {
                             obj.optDouble("distance_km"),
                             obj.optDouble("obs_lat"),
                             obj.optDouble("obs_lon")));
+                } catch (Exception ex) {
+                    callback.onError("Parse error: " + ex.getMessage());
+                }
+            }
+        });
+    }
+
+    public void getSites(SitesCallback callback) {
+        Request request = new Request.Builder()
+                .url("https://fimblefowl.co.uk/qrz/sites")
+                .build();
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                callback.onError("Network: " + e.getMessage());
+            }
+            @Override public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    String body = response.body().string();
+                    JSONArray arr = new JSONArray(body);
+                    List<Site> sites = new ArrayList<>();
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject o = arr.getJSONObject(i);
+                        Site s = new Site();
+                        s.call_sign = o.optString("call_sign");
+                        s.name      = o.optString("name");
+                        s.lat       = o.optDouble("lat");
+                        s.lon       = o.optDouble("lon");
+                        s.qnf       = o.optDouble("qnf", 3);
+                        s.qnh       = o.optDouble("qnh");
+                        s.site_type = o.optString("site_type");
+                        sites.add(s);
+                    }
+                    callback.onResult(sites);
+                } catch (Exception ex) {
+                    callback.onError("Parse error: " + ex.getMessage());
+                }
+            }
+        });
+    }
+
+    public void getSitesLoS(String callsign, SitesLoSCallback callback) {
+        Request request = new Request.Builder()
+                .url("https://fimblefowl.co.uk/qrz/sites/los/" + callsign.toUpperCase())
+                .build();
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                callback.onError("Network: " + e.getMessage());
+            }
+            @Override public void onResponse(Call call, Response response) throws IOException {
+                try (response) {
+                    String body = response.body().string();
+                    JSONObject obj = new JSONObject(body);
+                    if (obj.has("error")) { callback.onError(obj.optString("error")); return; }
+                    Map<String, SitesLoSEntry> result = new HashMap<>();
+                    java.util.Iterator<String> keys = obj.keys();
+                    while (keys.hasNext()) {
+                        String cs = keys.next();
+                        JSONObject e = obj.getJSONObject(cs);
+                        result.put(cs, new SitesLoSEntry(
+                                e.optBoolean("clear"),
+                                e.optDouble("obs_lat"),
+                                e.optDouble("obs_lon")));
+                    }
+                    callback.onResult(result);
                 } catch (Exception ex) {
                     callback.onError("Parse error: " + ex.getMessage());
                 }

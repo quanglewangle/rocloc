@@ -1,99 +1,84 @@
 package com.quanglewangle.peter.rocloc;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.inputmethod.EditorInfo;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.google.android.material.snackbar.Snackbar;
-import com.quanglewangle.peter.rocloc.data.OperatorEntity;
-import com.quanglewangle.peter.rocloc.data.Repository;
-import com.quanglewangle.peter.rocloc.databinding.ActivityMainBinding;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.quanglewangle.peter.rocloc.data.Site;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
-    private Repository repository;
-    private OperatorListAdapter adapter;
-    private final List<OperatorEntity> recentList = new ArrayList<>();
-    private Handler mainHandler;
+    private SearchFragment searchFragment;
+    private SitesFragment  sitesFragment;
+    private PinsFragment   pinsFragment;
+    private MapFragment    mapFragment;
+
+    private int currentNavId = R.id.nav_search;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        setSupportActionBar(binding.toolbar);
+        setContentView(R.layout.activity_main);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
-        mainHandler = new Handler(Looper.getMainLooper());
-        repository = new Repository(this);
+        searchFragment = new SearchFragment();
+        sitesFragment  = new SitesFragment();
+        pinsFragment   = new PinsFragment();
+        mapFragment    = new MapFragment();
 
-        adapter = new OperatorListAdapter(recentList, entity -> openDetail(entity.callsign));
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        binding.recyclerView.setAdapter(adapter);
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragmentContainer, searchFragment, "search")
+                .add(R.id.fragmentContainer, sitesFragment,  "sites")
+                .add(R.id.fragmentContainer, pinsFragment,   "pins")
+                .add(R.id.fragmentContainer, mapFragment,    "map")
+                .hide(sitesFragment)
+                .hide(pinsFragment)
+                .hide(mapFragment)
+                .commit();
 
-        binding.searchButton.setOnClickListener(v -> performSearch());
-        binding.callsignInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                performSearch();
-                return true;
-            }
-            return false;
+        BottomNavigationView nav = findViewById(R.id.bottomNav);
+        nav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == currentNavId) return true;
+            showFragment(id);
+            return true;
         });
-
-        // HERE FAB — shows current GPS position with no target callsign
-        binding.fabHere.setOnClickListener(v -> {
-            Intent i = new Intent(this, DetailActivity.class);
-            i.putExtra(DetailActivity.EXTRA_HERE_ONLY, true);
-            startActivity(i);
-        });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadRecent();
+    private void showFragment(int navId) {
+        Fragment show = fragmentFor(navId);
+        Fragment hide = fragmentFor(currentNavId);
+        if (show == null || hide == null) return;
+        currentNavId = navId;
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.hide(hide).show(show).commit();
+        updateTitle(navId);
     }
 
-    private void performSearch() {
-        String input = binding.callsignInput.getText().toString().trim().toUpperCase();
-        if (input.isEmpty()) return;
-
-        binding.progressBar.setVisibility(android.view.View.VISIBLE);
-
-        repository.lookup(input, false, new Repository.LookupCallback() {
-            @Override
-            public void onResult(OperatorEntity entity, boolean fromCache) {
-                binding.progressBar.setVisibility(android.view.View.GONE);
-                openDetail(entity.callsign);
-            }
-
-            @Override
-            public void onError(String error) {
-                binding.progressBar.setVisibility(android.view.View.GONE);
-                Snackbar.make(binding.getRoot(), "Not found: " + input, Snackbar.LENGTH_LONG).show();
-            }
-        }, mainHandler);
+    private Fragment fragmentFor(int navId) {
+        if (navId == R.id.nav_search) return searchFragment;
+        if (navId == R.id.nav_sites)  return sitesFragment;
+        if (navId == R.id.nav_pins)   return pinsFragment;
+        if (navId == R.id.nav_map)    return mapFragment;
+        return null;
     }
 
-    private void openDetail(String callsign) {
-        Intent i = new Intent(this, DetailActivity.class);
-        i.putExtra(DetailActivity.EXTRA_CALLSIGN, callsign);
-        startActivity(i);
+    private void updateTitle(int navId) {
+        if (getSupportActionBar() == null) return;
+        if (navId == R.id.nav_search) getSupportActionBar().setTitle(R.string.app_name);
+        else if (navId == R.id.nav_sites) getSupportActionBar().setTitle(R.string.nav_sites);
+        else if (navId == R.id.nav_pins)  getSupportActionBar().setTitle(R.string.nav_pins);
+        else if (navId == R.id.nav_map)   getSupportActionBar().setTitle(R.string.nav_map);
     }
 
-    private void loadRecent() {
-        repository.getRecent(mainHandler, list -> {
-            recentList.clear();
-            recentList.addAll(list);
-            adapter.notifyDataSetChanged();
-        });
+    public void showSiteOnMap(Site site) {
+        BottomNavigationView nav = findViewById(R.id.bottomNav);
+        nav.setSelectedItemId(R.id.nav_map);
+        showFragment(R.id.nav_map);
+        mapFragment.goToSite(site);
     }
 }
