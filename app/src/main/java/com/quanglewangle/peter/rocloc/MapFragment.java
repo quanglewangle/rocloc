@@ -1,6 +1,10 @@
 package com.quanglewangle.peter.rocloc;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -128,12 +132,10 @@ public class MapFragment extends Fragment {
         for (Site s : allSites) {
             if (s.lat == 0 && s.lon == 0) continue;
             GeoPoint gp = new GeoPoint(s.lat, s.lon);
-            Marker m = new Marker(mapView);
+            Marker m = dotMarker(mapView, s.isPin() ? Color.rgb(34, 197, 94) : Color.rgb(239, 107, 34));
             m.setPosition(gp);
-            m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             m.setTitle(s.displayCallsign());
             m.setSnippet(s.isPin() ? "Pin" : safe(s.name));
-            if (s.isPin()) m.getIcon().setTint(Color.rgb(34, 197, 94));
             final Site site = s;
             m.setOnMarkerClickListener((marker, map) -> {
                 marker.showInfoWindow();
@@ -213,6 +215,19 @@ public class MapFragment extends Fragment {
             if (callsign.equalsIgnoreCase(s.call_sign)) return s;
         }
         return null;
+    }
+
+    private Marker dotMarker(MapView map, int color) {
+        float dp = getResources().getDisplayMetrics().density;
+        int px = (int) (12 * dp);
+        Bitmap bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(color);
+        new Canvas(bmp).drawCircle(px / 2f, px / 2f, px / 2f, paint);
+        Marker m = new Marker(map);
+        m.setIcon(new BitmapDrawable(getResources(), bmp));
+        m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+        return m;
     }
 
     private static String safe(String s) { return s == null ? "" : s; }

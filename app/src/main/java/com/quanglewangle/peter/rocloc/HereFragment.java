@@ -2,7 +2,11 @@ package com.quanglewangle.peter.rocloc;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -142,10 +146,8 @@ public class HereFragment extends Fragment {
         GeoPoint gp = new GeoPoint(loc.getLatitude(), loc.getLongitude());
 
         if (hereMarker == null) {
-            hereMarker = new Marker(mapView);
-            hereMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+            hereMarker = dotMarker(Color.rgb(59, 130, 246));
             hereMarker.setTitle("Here");
-            hereMarker.getIcon().setTint(Color.rgb(59, 130, 246));
             mapView.getOverlays().add(0, hereMarker);
         }
         hereMarker.setPosition(gp);
@@ -168,12 +170,10 @@ public class HereFragment extends Fragment {
                     sitesLoaded = true;
                     for (Site s : allSites) {
                         if (s.lat == 0 && s.lon == 0) continue;
-                        Marker m = new Marker(mapView);
+                        Marker m = dotMarker(s.isPin() ? Color.rgb(34, 197, 94) : Color.rgb(239, 107, 34));
                         m.setPosition(new GeoPoint(s.lat, s.lon));
-                        m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
                         m.setTitle(s.displayCallsign());
                         m.setSnippet(s.isPin() ? "Pin" : safe(s.name));
-                        if (s.isPin()) m.getIcon().setTint(Color.rgb(34, 197, 94));
                         mapView.getOverlays().add(m);
                     }
                     progressBar.setVisibility(View.GONE);
@@ -239,6 +239,19 @@ public class HereFragment extends Fragment {
         line.getOutlinePaint().setStrokeWidth(3f);
         mapView.getOverlays().add(line);
         losLines.add(line);
+    }
+
+    private Marker dotMarker(int color) {
+        float dp = getResources().getDisplayMetrics().density;
+        int px = (int) (12 * dp);
+        Bitmap bmp = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(color);
+        new Canvas(bmp).drawCircle(px / 2f, px / 2f, px / 2f, paint);
+        Marker m = new Marker(mapView);
+        m.setIcon(new BitmapDrawable(getResources(), bmp));
+        m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+        return m;
     }
 
     private static String safe(String s) { return s == null ? "" : s; }
