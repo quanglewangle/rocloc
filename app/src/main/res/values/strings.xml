@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RocLoc</string>
+    <string name="callsign_hint">Callsign — e.g. G4XYZ</string>
+    <string name="lookup">Look Up</string>
+    <string name="recent_lookups">Recent lookups</string>
+    <string name="here">HERE</string>
+    <string name="refresh">Refresh from server</string>
+    <string name="getting_location">Acquiring GPS…</string>
+    <string name="action_settings">Settings</string>
+</resources>
