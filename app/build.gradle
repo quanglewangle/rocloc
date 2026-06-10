@@ -8,13 +8,13 @@ if (keystoreFile.exists()) keystoreProps.load(keystoreFile.newDataInputStream())
 
 android {
     namespace "com.quanglewangle.peter.rocloc"
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.quanglewangle.peter.rocloc"
         minSdk 24
-        targetSdk 34
-        versionCode 2
+        targetSdk 35
+        versionCode 3
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -42,6 +42,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
