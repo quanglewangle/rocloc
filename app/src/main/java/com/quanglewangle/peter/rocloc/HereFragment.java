@@ -29,7 +29,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import androidx.preference.PreferenceManager;
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
 import com.quanglewangle.peter.rocloc.terrain.TerrainEngine;
@@ -52,7 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HereFragment extends Fragment {
 
     private static final double DOWNLOAD_RADIUS_KM = 40;
-    private static final double DEFAULT_LOS_MAX_KM = 50;
 
     private MapView mapView;
     private ProgressBar progressBar;
@@ -223,11 +221,10 @@ public class HereFragment extends Fragment {
         losLines.clear();
 
         double lat1 = hereLocation.getLatitude(), lon1 = hereLocation.getLongitude();
-        double losMaxM = SettingsFragment.getLosMaxKm(requireContext()) * 1000.0;
         List<Site> targets = new ArrayList<>();
         for (Site s : allSites) {
             if (s.lat == 0 && s.lon == 0) continue;
-            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= losMaxM) targets.add(s);
+            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= 70_000) targets.add(s);
         }
         if (targets.isEmpty() || hereLocation == null) return;
 
