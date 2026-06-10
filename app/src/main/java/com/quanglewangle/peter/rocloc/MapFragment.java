@@ -61,6 +61,8 @@ public class MapFragment extends Fragment {
         mapView = view.findViewById(R.id.mapView);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
+        mapView.setHorizontalMapRepetitionEnabled(false);
+        mapView.setVerticalMapRepetitionEnabled(false);
         mapView.getController().setZoom(6.5);
         mapView.getController().setCenter(new GeoPoint(54.5, -3.0));
 

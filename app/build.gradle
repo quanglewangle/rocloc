@@ -64,6 +64,9 @@ dependencies {
     // FusedLocationProvider for HERE feature
     implementation 'com.google.android.gms:play-services-location:21.0.1'
 
+    // Preferences
+    implementation 'androidx.preference:preference:1.2.1'
+
     // OSMDroid map + clustering
     implementation 'org.osmdroid:osmdroid-android:6.1.17'
     implementation 'com.github.MKergall:osmbonuspack:6.9.0'
