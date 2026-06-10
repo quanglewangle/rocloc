@@ -1,20 +1,23 @@
 package com.quanglewangle.peter.rocloc;
 
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
-import com.quanglewangle.peter.rocloc.BuildConfig;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.quanglewangle.peter.rocloc.BuildConfig;
 import com.quanglewangle.peter.rocloc.data.Site;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final Fragment[] frags = new Fragment[6];
+    private final Fragment[] frags = new Fragment[5];
     private int currentIdx = 0;
+    private SettingsFragment settingsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setSubtitle("v" + BuildConfig.VERSION_NAME + " build " + BuildConfig.VERSION_CODE);
         }
 
-        // Only create Search fragment eagerly; others are created on first selection.
         frags[0] = new SearchFragment();
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragmentContainer, frags[0], "search")
@@ -40,13 +42,46 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void switchTo(int idx) {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
+        return true;
+    }
 
-        // Hide current
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            showSettings();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showSettings() {
+        if (settingsFragment == null) {
+            settingsFragment = new SettingsFragment();
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragmentContainer, settingsFragment, "settings")
+                    .addToBackStack("settings")
+                    .commit();
+        } else {
+            getSupportFragmentManager().beginTransaction()
+                    .show(settingsFragment)
+                    .addToBackStack("settings")
+                    .commit();
+        }
+        if (getSupportActionBar() != null) getSupportActionBar().setTitle(R.string.nav_settings);
+    }
+
+    private void switchTo(int idx) {
+        // Dismiss settings if visible
+        if (settingsFragment != null && !settingsFragment.isHidden()) {
+            getSupportFragmentManager().popBackStack();
+        }
+
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         if (frags[currentIdx] != null) ft.hide(frags[currentIdx]);
 
-        // Create lazily if needed
         if (frags[idx] == null) {
             frags[idx] = createFragment(idx);
             ft.add(R.id.fragmentContainer, frags[idx], tagFor(idx));
@@ -66,27 +101,25 @@ public class MainActivity extends AppCompatActivity {
             case 2: return new PinsFragment();
             case 3: return new MapFragment();
             case 4: return new HereFragment();
-            case 5: return new SettingsFragment();
             default: return new SearchFragment();
         }
     }
 
     private int indexFor(int navId) {
-        if (navId == R.id.nav_sites)     return 1;
-        if (navId == R.id.nav_pins)      return 2;
-        if (navId == R.id.nav_map)       return 3;
-        if (navId == R.id.nav_here)      return 4;
-        if (navId == R.id.nav_settings)  return 5;
+        if (navId == R.id.nav_sites) return 1;
+        if (navId == R.id.nav_pins)  return 2;
+        if (navId == R.id.nav_map)   return 3;
+        if (navId == R.id.nav_here)  return 4;
         return 0;
     }
 
     private String tagFor(int idx) {
-        return new String[]{"search", "sites", "pins", "map", "here", "settings"}[idx];
+        return new String[]{"search", "sites", "pins", "map", "here"}[idx];
     }
 
     private void updateTitle(int idx) {
         if (getSupportActionBar() == null) return;
-        int[] titles = {R.string.app_name, R.string.nav_sites, R.string.nav_pins, R.string.nav_map, R.string.nav_here, R.string.nav_settings};
+        int[] titles = {R.string.app_name, R.string.nav_sites, R.string.nav_pins, R.string.nav_map, R.string.nav_here};
         getSupportActionBar().setTitle(titles[idx]);
     }
 
