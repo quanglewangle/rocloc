@@ -221,10 +221,11 @@ public class HereFragment extends Fragment {
         losLines.clear();
 
         double lat1 = hereLocation.getLatitude(), lon1 = hereLocation.getLongitude();
+        double losMaxM = SettingsFragment.getLosMaxKm(requireContext()) * 1000.0;
         List<Site> targets = new ArrayList<>();
         for (Site s : allSites) {
             if (s.lat == 0 && s.lon == 0) continue;
-            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= 70_000) targets.add(s);
+            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= losMaxM) targets.add(s);
         }
         if (targets.isEmpty() || hereLocation == null) return;
 

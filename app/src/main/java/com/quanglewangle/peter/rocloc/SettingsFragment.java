@@ -16,7 +16,12 @@ import com.google.android.material.slider.Slider;
 
 public class SettingsFragment extends Fragment {
 
+    public static final String PREF_LOS_MAX_KM      = "pref_los_max_km";
     public static final String PREF_ANTENNA_HEIGHT_M = "pref_antenna_height_m";
+
+    public static int getLosMaxKm(android.content.Context ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getInt(PREF_LOS_MAX_KM, 50);
+    }
 
     public static float getAntennaHeightM(android.content.Context ctx) {
         return PreferenceManager.getDefaultSharedPreferences(ctx).getFloat(PREF_ANTENNA_HEIGHT_M, 2f);
@@ -32,21 +37,29 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
+        Slider losSlider      = view.findViewById(R.id.losRangeSlider);
+        TextView losLabel     = view.findViewById(R.id.losRangeLabel);
         Slider antennaSlider  = view.findViewById(R.id.antennaHeightSlider);
         TextView antennaLabel = view.findViewById(R.id.antennaHeightLabel);
 
+        losSlider.setValue(prefs.getInt(PREF_LOS_MAX_KM, 50));
         antennaSlider.setValue(prefs.getFloat(PREF_ANTENNA_HEIGHT_M, 2f));
-        updateLabel(antennaLabel, (int) antennaSlider.getValue());
+
+        losLabel.setText(prefs.getInt(PREF_LOS_MAX_KM, 50) + " km");
+        antennaLabel.setText((int) prefs.getFloat(PREF_ANTENNA_HEIGHT_M, 2f) + " m");
+
+        losSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                prefs.edit().putInt(PREF_LOS_MAX_KM, (int) value).apply();
+                losLabel.setText((int) value + " km");
+            }
+        });
 
         antennaSlider.addOnChangeListener((slider, value, fromUser) -> {
             if (fromUser) {
                 prefs.edit().putFloat(PREF_ANTENNA_HEIGHT_M, value).apply();
-                updateLabel(antennaLabel, (int) value);
+                antennaLabel.setText((int) value + " m");
             }
         });
-    }
-
-    private void updateLabel(TextView tv, int value) {
-        tv.setText(value + " m");
     }
 }
