@@ -60,8 +60,11 @@ public class PinsFragment extends Fragment {
                 mainHandler.post(() -> {
                     pinList.clear();
                     for (Site s : sites) { if (s.isPin()) pinList.add(s); }
-                    java.util.Collections.sort(pinList, (a, b) ->
-                            a.displayCallsign().compareToIgnoreCase(b.displayCallsign()));
+                    java.util.Collections.sort(pinList, (a, b) -> {
+                        String na = a.name != null ? a.name : a.displayCallsign();
+                        String nb = b.name != null ? b.name : b.displayCallsign();
+                        return na.compareToIgnoreCase(nb);
+                    });
                     adapter.notifyDataSetChanged();
                     progressBar.setVisibility(View.GONE);
                     if (pinList.isEmpty()) {

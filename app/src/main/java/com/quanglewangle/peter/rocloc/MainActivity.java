@@ -3,6 +3,7 @@ package com.quanglewangle.peter.rocloc;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.quanglewangle.peter.rocloc.BuildConfig;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -20,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setSubtitle("v" + BuildConfig.VERSION_NAME + " build " + BuildConfig.VERSION_CODE);
+        }
 
         // Only create Search fragment eagerly; others are created on first selection.
         frags[0] = new SearchFragment();
