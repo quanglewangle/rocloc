@@ -33,6 +33,13 @@ public class MainActivity extends AppCompatActivity {
                 .add(R.id.fragmentContainer, frags[0], "search")
                 .commit();
 
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                settingsFragment = null;
+                updateTitle(currentIdx);
+            }
+        });
+
         BottomNavigationView nav = findViewById(R.id.bottomNav);
         nav.setOnItemSelectedListener(item -> {
             int idx = indexFor(item.getItemId());
@@ -58,30 +65,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
+        if (settingsFragment != null) return; // already showing
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         if (frags[currentIdx] != null) ft.hide(frags[currentIdx]);
-        if (settingsFragment == null) {
-            settingsFragment = new SettingsFragment();
-            ft.add(R.id.fragmentContainer, settingsFragment, "settings");
-        } else {
-            ft.show(settingsFragment);
-        }
-        ft.addToBackStack("settings").commit();
+        settingsFragment = new SettingsFragment();
+        ft.add(R.id.fragmentContainer, settingsFragment, "settings")
+          .addToBackStack("settings")
+          .commit();
         if (getSupportActionBar() != null) getSupportActionBar().setTitle(R.string.nav_settings);
-        getSupportFragmentManager().addOnBackStackChangedListener(new androidx.fragment.app.FragmentManager.OnBackStackChangedListener() {
-            @Override public void onBackStackChanged() {
-                if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-                    getSupportFragmentManager().removeOnBackStackChangedListener(this);
-                    updateTitle(currentIdx);
-                }
-            }
-        });
     }
 
     private void switchTo(int idx) {
         // Dismiss settings if visible
-        if (settingsFragment != null && !settingsFragment.isHidden()) {
-            getSupportFragmentManager().popBackStack();
+        if (settingsFragment != null) {
+            getSupportFragmentManager().popBackStackImmediate();
+            settingsFragment = null;
         }
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();

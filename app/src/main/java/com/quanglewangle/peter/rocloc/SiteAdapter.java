@@ -1,5 +1,6 @@
 package com.quanglewangle.peter.rocloc;
 
+import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +28,12 @@ public class SiteAdapter extends RecyclerView.Adapter<SiteAdapter.ViewHolder> {
     @NonNull @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_site, parent, false);
-        return new ViewHolder(v);
+        ViewHolder h = new ViewHolder(v);
+        v.setOnClickListener(view -> {
+            int pos = h.getAdapterPosition();
+            if (pos != RecyclerView.NO_ID) listener.onItemClick(items.get(pos));
+        });
+        return h;
     }
 
     @Override
@@ -46,7 +52,20 @@ public class SiteAdapter extends RecyclerView.Adapter<SiteAdapter.ViewHolder> {
         } else {
             h.elev.setText("");
         }
-        h.itemView.setOnClickListener(v -> listener.onItemClick(s));
+    }
+
+    public static void showDetail(View anchor, Site s) {
+        StringBuilder msg = new StringBuilder();
+        if (s.name != null && !s.name.isEmpty()) msg.append(s.name).append("\n");
+        if (s.call_sign != null && !s.call_sign.isEmpty()) msg.append("Callsign: ").append(s.call_sign).append("\n");
+        if (s.qnf > 0) msg.append("Antenna height: ").append((int) s.qnf).append(" m\n");
+        if (s.qnh > 0) msg.append("Elevation: ").append((int) s.qnh).append(" m ASL\n");
+        msg.append(String.format(java.util.Locale.US, "%.4f°N  %.4f°E", s.lat, s.lon));
+        new AlertDialog.Builder(anchor.getContext())
+                .setTitle(s.displayCallsign())
+                .setMessage(msg.toString().trim())
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     @Override public int getItemCount() { return items.size(); }

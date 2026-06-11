@@ -4,7 +4,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -46,6 +48,7 @@ public class PinsFragment extends Fragment {
         adapter = new SiteAdapter(pinList, site -> showOnMap(site));
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         rv.setAdapter(adapter);
+        addLongPressDetector(rv, pinList);
 
         load();
     }
@@ -79,6 +82,31 @@ public class PinsFragment extends Fragment {
                     emptyText.setText(error);
                     emptyText.setVisibility(View.VISIBLE);
                 });
+            }
+        });
+    }
+
+    private void addLongPressDetector(RecyclerView rv, List<Site> list) {
+        Handler h = new Handler(Looper.getMainLooper());
+        Runnable[] pending = {null};
+        rv.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override public boolean onInterceptTouchEvent(@NonNull RecyclerView r, @NonNull MotionEvent e) {
+                if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                    View child = rv.findChildViewUnder(e.getX(), e.getY());
+                    if (child != null) {
+                        int pos = rv.getChildAdapterPosition(child);
+                        if (pos >= 0 && pos < list.size()) {
+                            Site site = list.get(pos);
+                            if (pending[0] != null) h.removeCallbacks(pending[0]);
+                            pending[0] = () -> { pending[0] = null; SiteAdapter.showDetail(child, site); };
+                            h.postDelayed(pending[0], ViewConfiguration.getLongPressTimeout());
+                        }
+                    }
+                } else if (e.getActionMasked() == MotionEvent.ACTION_UP
+                        || e.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                    if (pending[0] != null) { h.removeCallbacks(pending[0]); pending[0] = null; }
+                }
+                return false;
             }
         });
     }
