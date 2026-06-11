@@ -5,53 +5,30 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Tower left leg -->
+    <!-- Centre dot -->
     <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
-        android:pathData="M54,32L36,82" />
-
-    <!-- Tower right leg -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
-        android:pathData="M54,32L72,82" />
-
-    <!-- Tower base -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
-        android:pathData="M36,82L72,82" />
-
-    <!-- Cross-brace -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:pathData="M43,59L65,59" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,70 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
 
     <!-- Signal arc, small -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="3.5"
-        android:pathData="M44,32A10,10 0 0,0 64,32" />
+        android:strokeWidth="4"
+        android:pathData="M42,70 A12,12 0 0,1 66,70" />
 
     <!-- Signal arc, medium -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:pathData="M35,32A19,19 0 0,0 73,32" />
+        android:strokeWidth="3.5"
+        android:pathData="M33,70 A21,21 0 0,1 75,70" />
 
     <!-- Signal arc, large -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.5"
-        android:pathData="M26,32A28,28 0 0,0 82,32" />
+        android:strokeWidth="3"
+        android:pathData="M24,70 A30,30 0 0,1 84,70" />
 
 </vector>
