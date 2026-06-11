@@ -99,5 +99,27 @@
 
         </LinearLayout>
 
+        <!-- Here site filter -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Here site filter"
+            android:textAppearance="?attr/textAppearanceSubtitle1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Show LoS to a single site in Here view, or all sites"
+            android:textAppearance="?attr/textAppearanceCaption"
+            android:textColor="?attr/colorControlNormal" />
+
+        <Spinner
+            android:id="@+id/siteFilterSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
     </LinearLayout>
 </ScrollView>

@@ -58,19 +58,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        if (frags[currentIdx] != null) ft.hide(frags[currentIdx]);
         if (settingsFragment == null) {
             settingsFragment = new SettingsFragment();
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragmentContainer, settingsFragment, "settings")
-                    .addToBackStack("settings")
-                    .commit();
+            ft.add(R.id.fragmentContainer, settingsFragment, "settings");
         } else {
-            getSupportFragmentManager().beginTransaction()
-                    .show(settingsFragment)
-                    .addToBackStack("settings")
-                    .commit();
+            ft.show(settingsFragment);
         }
+        ft.addToBackStack("settings").commit();
         if (getSupportActionBar() != null) getSupportActionBar().setTitle(R.string.nav_settings);
+        getSupportFragmentManager().addOnBackStackChangedListener(new androidx.fragment.app.FragmentManager.OnBackStackChangedListener() {
+            @Override public void onBackStackChanged() {
+                if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                    getSupportFragmentManager().removeOnBackStackChangedListener(this);
+                    updateTitle(currentIdx);
+                }
+            }
+        });
     }
 
     private void switchTo(int idx) {

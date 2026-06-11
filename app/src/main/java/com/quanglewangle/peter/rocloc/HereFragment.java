@@ -70,6 +70,8 @@ public class HereFragment extends Fragment {
 
     private TerrainStore terrainStore;
     private TerrainEngine terrainEngine;
+    private double lastLoSLat = Double.NaN;
+    private double lastLoSLon = Double.NaN;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -182,6 +184,10 @@ public class HereFragment extends Fragment {
             mapView.getController().setZoom(13.0);
             statusText.setVisibility(View.GONE);
             if (sitesLoaded) drawLoS();
+        } else if (terrainEngine.hasTiles() && sitesLoaded && !Double.isNaN(lastLoSLat)) {
+            float[] dist = new float[1];
+            Location.distanceBetween(lastLoSLat, lastLoSLon, loc.getLatitude(), loc.getLongitude(), dist);
+            if (dist[0] >= 50f) drawLoS();
         }
         mapView.invalidate();
     }
@@ -221,11 +227,20 @@ public class HereFragment extends Fragment {
         losLines.clear();
 
         double lat1 = hereLocation.getLatitude(), lon1 = hereLocation.getLongitude();
+        lastLoSLat = lat1;
+        lastLoSLon = lon1;
+
         double losMaxM = SettingsFragment.getLosMaxKm(requireContext()) * 1000.0;
+        String filterSite = SettingsFragment.getFilterSite(requireContext());
         List<Site> targets = new ArrayList<>();
         for (Site s : allSites) {
             if (s.lat == 0 && s.lon == 0) continue;
-            if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= losMaxM) targets.add(s);
+            if (!filterSite.isEmpty()) {
+                // Single-site mode: include only the selected site, no range limit
+                if (filterSite.equals(s.displayCallsign())) targets.add(s);
+            } else {
+                if (TerrainEngine.haversineM(lat1, lon1, s.lat, s.lon) <= losMaxM) targets.add(s);
+            }
         }
         if (targets.isEmpty() || hereLocation == null) return;
 
