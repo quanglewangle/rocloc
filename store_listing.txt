@@ -1,0 +1,29 @@
+SHORT DESCRIPTION (max 80 chars):
+Callsign lookup and line-of-sight planning for Radio Operators Cornwall members
+
+
+FULL DESCRIPTION:
+RocLoc is the companion app for members of Radio Operators Cornwall (ROC) — look up callsigns, find club sites and member pins, and check line-of-sight between locations, all from your phone.
+
+Callsign lookup
+Search any UK callsign to see the operator's name, location, and licence details. Results are cached so you can look them up again offline.
+
+Sites and Pins
+Browse ROC operating sites and saved pins. Tap any entry to see it on the map or check line-of-sight from there.
+
+Map view
+All ROC sites and pins on an interactive map. Tap any marker to see green (clear) or red (blocked) line-of-sight lines to other stations.
+
+Here — field planning
+Tap Here to centre the map on your GPS location and see line-of-sight lines to every ROC site within range. Perfect for scouting activations in the field. Works offline if you download terrain tiles over Wi-Fi first.
+
+On-device terrain
+Line-of-sight uses OS Terrain 50 elevation data for accurate results over real UK terrain, accounting for atmospheric refraction. Download tiles for your area in advance and it works with no phone signal.
+
+Settings
+Adjust your LoS range (to reduce clutter on busy maps) and your antenna height above ground.
+
+
+ATTRIBUTION (add to description or store page):
+Contains OS data © Crown copyright and database right 2024
+Callsign data from QRZ.com · Maps from OpenStreetMap
