@@ -80,6 +80,9 @@ public class HereFragment extends Fragment {
         Configuration.getInstance().load(requireContext(),
                 requireContext().getSharedPreferences("osmdroid", 0));
         Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
+        java.io.File osmdroidBase = new java.io.File(requireContext().getCacheDir(), "osmdroid");
+        Configuration.getInstance().setOsmdroidBasePath(osmdroidBase);
+        Configuration.getInstance().setOsmdroidTileCache(new java.io.File(osmdroidBase, "tiles"));
         return inflater.inflate(R.layout.fragment_here, container, false);
     }
 
