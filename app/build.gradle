@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'com.github.triplet.play' version '3.10.1'
 }
 
 def keystoreProps = new Properties()
@@ -45,12 +44,6 @@ android {
         viewBinding true
         buildConfig true
     }
-}
-
-play {
-    serviceAccountCredentials = file("../play-service-account.json")
-    track = "internal"
-    defaultToAppBundles = true
 }
 
 dependencies {
