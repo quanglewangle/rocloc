@@ -20,6 +20,7 @@ import androidx.preference.PreferenceManager;
 import com.google.android.material.slider.Slider;
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.data.SiteCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +92,7 @@ public class SettingsFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         siteSpinner.setAdapter(adapter);
 
-        new ApiService().getSites(new ApiService.SitesCallback() {
+        SiteCache.get().getSites(new ApiService.SitesCallback() {
             @Override public void onResult(List<Site> sites) {
                 mainHandler.post(() -> {
                     if (getContext() == null) return;

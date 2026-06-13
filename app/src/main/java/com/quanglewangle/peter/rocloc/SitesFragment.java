@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.data.SiteCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,6 @@ public class SitesFragment extends Fragment {
 
     private SiteAdapter adapter;
     private final List<Site> siteList = new ArrayList<>();
-    private final ApiService api = new ApiService();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private ProgressBar progressBar;
@@ -56,11 +56,13 @@ public class SitesFragment extends Fragment {
     private void load() {
         progressBar.setVisibility(View.VISIBLE);
         emptyText.setVisibility(View.GONE);
-        api.getSites(new ApiService.SitesCallback() {
+        SiteCache.get().getSites(new ApiService.SitesCallback() {
             @Override public void onResult(List<Site> sites) {
                 mainHandler.post(() -> {
                     siteList.clear();
                     for (Site s : sites) { if (!s.isPin()) siteList.add(s); }
+                    java.util.Collections.sort(siteList,
+                            (a, b) -> a.displayCallsign().compareToIgnoreCase(b.displayCallsign()));
                     adapter.notifyDataSetChanged();
                     progressBar.setVisibility(View.GONE);
                     if (siteList.isEmpty()) {

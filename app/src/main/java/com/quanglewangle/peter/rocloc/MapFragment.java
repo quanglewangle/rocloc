@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.data.SiteCache;
 
 import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer;
 import org.osmdroid.config.Configuration;
@@ -121,7 +122,7 @@ public class MapFragment extends Fragment {
 
     private void loadSites(boolean fitBounds) {
         progressBar.setVisibility(View.VISIBLE);
-        api.getSites(new ApiService.SitesCallback() {
+        SiteCache.get().getSites(new ApiService.SitesCallback() {
             @Override public void onResult(List<Site> sites) {
                 mainHandler.post(() -> {
                     allSites = sites;
@@ -166,8 +167,8 @@ public class MapFragment extends Fragment {
     }
 
     private void fetchLoS(Site src) {
-        if (src.call_sign == null || src.call_sign.isEmpty()) return;
         clearLoS();
+        if (src.call_sign == null || src.call_sign.isEmpty()) return;
         progressBar.setVisibility(View.VISIBLE);
         api.getSitesLoS(src.call_sign, new ApiService.SitesLoSCallback() {
             @Override public void onResult(Map<String, ApiService.SitesLoSEntry> result) {

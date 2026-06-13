@@ -31,6 +31,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.data.SiteCache;
 import com.quanglewangle.peter.rocloc.terrain.TerrainEngine;
 import com.quanglewangle.peter.rocloc.terrain.TerrainStore;
 
@@ -118,6 +119,12 @@ public class HereFragment extends Fragment {
         stopLocationUpdates();
     }
 
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        bgExecutor.shutdownNow();
+        mapView = null;
+    }
+
     @Override public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (!hidden && mapView != null) {
@@ -196,7 +203,7 @@ public class HereFragment extends Fragment {
 
     private void loadSites() {
         progressBar.setVisibility(View.VISIBLE);
-        api.getSites(new ApiService.SitesCallback() {
+        SiteCache.get().getSites(new ApiService.SitesCallback() {
             @Override public void onResult(List<Site> sites) {
                 mainHandler.post(() -> {
                     allSites = sites;
@@ -262,6 +269,7 @@ public class HereFragment extends Fragment {
                 double h2 = (Double.isNaN(elev2) ? 0 : elev2) + s.qnf;
                 TerrainEngine.LoSResult r = terrainEngine.losCheck(lat1, lon1, h1, s.lat, s.lon, h2);
                 mainHandler.post(() -> {
+                    if (mapView == null) return;
                     GeoPoint from = new GeoPoint(lat1, lon1);
                     GeoPoint to   = new GeoPoint(s.lat, s.lon);
                     if (r.clear) {
@@ -274,7 +282,7 @@ public class HereFragment extends Fragment {
                     mapView.invalidate();
                 });
             }
-            mainHandler.post(() -> progressBar.setVisibility(View.GONE));
+            mainHandler.post(() -> { if (mapView != null) progressBar.setVisibility(View.GONE); });
         });
     }
 

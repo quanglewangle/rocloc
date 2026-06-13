@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
+import com.quanglewangle.peter.rocloc.data.SiteCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,6 @@ public class PinsFragment extends Fragment {
 
     private SiteAdapter adapter;
     private final List<Site> pinList = new ArrayList<>();
-    private final ApiService api = new ApiService();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private ProgressBar progressBar;
@@ -56,7 +56,7 @@ public class PinsFragment extends Fragment {
     private void load() {
         progressBar.setVisibility(View.VISIBLE);
         emptyText.setVisibility(View.GONE);
-        api.getSites(new ApiService.SitesCallback() {
+        SiteCache.get().getSites(new ApiService.SitesCallback() {
             @Override public void onResult(List<Site> sites) {
                 mainHandler.post(() -> {
                     pinList.clear();
