@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
 import com.quanglewangle.peter.rocloc.data.SiteCache;
@@ -132,7 +134,11 @@ public class MapFragment extends Fragment {
                 });
             }
             @Override public void onError(String error) {
-                mainHandler.post(() -> progressBar.setVisibility(View.GONE));
+                mainHandler.post(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (getView() != null)
+                        Snackbar.make(getView(), "Could not load sites: " + error, Snackbar.LENGTH_LONG).show();
+                });
             }
         });
     }

@@ -11,6 +11,13 @@ import java.util.concurrent.Executors;
 
 public class Repository {
 
+    private static Repository instance;
+
+    public static Repository getInstance(Context context) {
+        if (instance == null) instance = new Repository(context.getApplicationContext());
+        return instance;
+    }
+
     public interface LookupCallback {
         void onResult(OperatorEntity entity, boolean fromCache);
         void onError(String error);

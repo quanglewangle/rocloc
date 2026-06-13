@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.quanglewangle.peter.rocloc.api.ApiService;
 import com.quanglewangle.peter.rocloc.data.Site;
@@ -32,6 +33,7 @@ public class PinsFragment extends Fragment {
 
     private ProgressBar progressBar;
     private TextView emptyText;
+    private SwipeRefreshLayout swipeRefresh;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -41,8 +43,13 @@ public class PinsFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        progressBar = view.findViewById(R.id.progressBar);
-        emptyText   = view.findViewById(R.id.emptyText);
+        progressBar  = view.findViewById(R.id.progressBar);
+        emptyText    = view.findViewById(R.id.emptyText);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        swipeRefresh.setOnRefreshListener(() -> {
+            SiteCache.get().invalidate();
+            load();
+        });
 
         RecyclerView rv = view.findViewById(R.id.recyclerView);
         adapter = new SiteAdapter(pinList, site -> showOnMap(site));
@@ -68,6 +75,7 @@ public class PinsFragment extends Fragment {
                     });
                     adapter.notifyDataSetChanged();
                     progressBar.setVisibility(View.GONE);
+                    swipeRefresh.setRefreshing(false);
                     if (pinList.isEmpty()) {
                         emptyText.setText(R.string.no_pins);
                         emptyText.setVisibility(View.VISIBLE);
@@ -77,6 +85,7 @@ public class PinsFragment extends Fragment {
             @Override public void onError(String error) {
                 mainHandler.post(() -> {
                     progressBar.setVisibility(View.GONE);
+                    swipeRefresh.setRefreshing(false);
                     emptyText.setText(error);
                     emptyText.setVisibility(View.VISIBLE);
                 });

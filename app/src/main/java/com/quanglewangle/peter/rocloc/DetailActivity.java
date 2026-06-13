@@ -43,7 +43,7 @@ public class DetailActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mainHandler    = new Handler(Looper.getMainLooper());
-        repository     = new Repository(this);
+        repository     = Repository.getInstance(this);
         apiService     = new ApiService();
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 

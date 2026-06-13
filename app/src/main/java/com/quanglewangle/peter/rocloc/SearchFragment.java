@@ -52,7 +52,7 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         mainHandler = new Handler(Looper.getMainLooper());
-        repository  = new Repository(requireContext());
+        repository  = Repository.getInstance(requireContext());
 
         callsignInput = view.findViewById(R.id.callsignInput);
         searchButton  = view.findViewById(R.id.searchButton);

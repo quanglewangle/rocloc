@@ -222,7 +222,13 @@ public class HereFragment extends Fragment {
                 });
             }
             @Override public void onError(String error) {
-                mainHandler.post(() -> progressBar.setVisibility(View.GONE));
+                mainHandler.post(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (statusText != null) {
+                        statusText.setText("Could not load sites: " + error);
+                        statusText.setVisibility(View.VISIBLE);
+                    }
+                });
             }
         });
     }
@@ -294,6 +300,7 @@ public class HereFragment extends Fragment {
                     new ApiService.LoSCallback() {
                         @Override public void onResult(ApiService.LoSResult r) {
                             mainHandler.post(() -> {
+                                if (mapView == null) return;
                                 GeoPoint from = new GeoPoint(lat1, lon1);
                                 GeoPoint to   = new GeoPoint(s.lat, s.lon);
                                 if (r.clear) {
@@ -310,7 +317,7 @@ public class HereFragment extends Fragment {
                         }
                         @Override public void onError(String error) {
                             if (remaining.decrementAndGet() == 0)
-                                mainHandler.post(() -> progressBar.setVisibility(View.GONE));
+                                mainHandler.post(() -> { if (mapView != null) progressBar.setVisibility(View.GONE); });
                         }
                     });
         }

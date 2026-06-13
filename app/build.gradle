@@ -66,6 +66,7 @@ dependencies {
 
     // Preferences
     implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
     // OSMDroid map + clustering
     implementation 'org.osmdroid:osmdroid-android:6.1.17'
