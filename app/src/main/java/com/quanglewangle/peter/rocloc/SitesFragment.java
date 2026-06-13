@@ -49,11 +49,9 @@ public class SitesFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         rv.setAdapter(adapter);
         addLongPressDetector(rv, siteList);
-
-        load();
     }
 
-    @Override public void onResume() { super.onResume(); load(); }
+    @Override public void onResume() { super.onResume(); if (siteList.isEmpty()) load(); }
 
     private void load() {
         progressBar.setVisibility(View.VISIBLE);

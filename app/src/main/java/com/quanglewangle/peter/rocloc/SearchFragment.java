@@ -99,7 +99,7 @@ public class SearchFragment extends Fragment {
             }
             @Override public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
-                Snackbar.make(requireView(), "Not found: " + input, Snackbar.LENGTH_LONG).show();
+                Snackbar.make(requireView(), error, Snackbar.LENGTH_LONG).show();
             }
         }, mainHandler);
     }

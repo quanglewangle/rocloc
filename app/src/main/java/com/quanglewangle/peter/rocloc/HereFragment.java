@@ -316,6 +316,7 @@ public class HereFragment extends Fragment {
             statusText.setVisibility(View.VISIBLE);
             return;
         }
+        terrainStore.clearTiles();
         downloadBtn.setEnabled(false);
         statusText.setText("Fetching tile list…");
         statusText.setVisibility(View.VISIBLE);
@@ -380,22 +381,25 @@ public class HereFragment extends Fragment {
 
     private void onDownloadComplete(int failed) {
         progressBar.setVisibility(View.GONE);
-        downloadBtn.setVisibility(View.GONE);
         int count = terrainStore.tileCount();
         long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
         String msg = count + " tiles on device (" + mb + " MB)";
         if (failed > 0) msg += " — " + failed + " failed";
         statusText.setText(msg);
         mainHandler.postDelayed(() -> statusText.setVisibility(View.GONE), 4000);
+        updateDownloadBtn();
+        downloadBtn.setEnabled(true);
         if (hereLocation != null && sitesLoaded) drawLoS();
     }
 
     private void updateDownloadBtn() {
         if (downloadBtn == null) return;
+        downloadBtn.setVisibility(View.VISIBLE);
         if (terrainStore.tileCount() > 0) {
-            downloadBtn.setVisibility(View.GONE);
+            int count = terrainStore.tileCount();
+            long mb = terrainStore.totalSizeBytes() / (1024 * 1024);
+            downloadBtn.setText(count + " tiles (" + mb + " MB) — tap to re-download");
         } else {
-            downloadBtn.setVisibility(View.VISIBLE);
             downloadBtn.setText("Tap to download terrain for offline LoS");
         }
     }

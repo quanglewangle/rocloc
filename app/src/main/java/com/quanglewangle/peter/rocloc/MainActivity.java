@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView nav = findViewById(R.id.bottomNav);
         nav.setSelectedItemId(R.id.nav_map);
         switchTo(3);
+        getSupportFragmentManager().executePendingTransactions();
         if (frags[3] instanceof MapFragment) {
             ((MapFragment) frags[3]).goToSite(site);
         }

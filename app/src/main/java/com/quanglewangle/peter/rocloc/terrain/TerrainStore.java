@@ -81,6 +81,12 @@ public class TerrainStore {
         memCache.remove(code.toUpperCase());
     }
 
+    public void clearTiles() {
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".bin"));
+        if (files != null) for (File f : files) f.delete();
+        memCache.clear();
+    }
+
     public long totalSizeBytes() {
         long total = 0;
         File[] files = dir.listFiles();

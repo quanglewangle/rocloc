@@ -77,7 +77,14 @@ public class MapFragment extends Fragment {
                         }
                         return true;
                     }
-                    @Override public boolean longPressHelper(GeoPoint p) { return false; }
+                    @Override public boolean longPressHelper(GeoPoint p) {
+                        Site nearest = nearestSite(p, 40);
+                        if (nearest != null) {
+                            SiteAdapter.showDetail(mapView, nearest);
+                            return true;
+                        }
+                        return false;
+                    }
                 }));
 
         if (!sitesLoaded) loadSites(false);

@@ -159,7 +159,7 @@ public class DetailActivity extends AppCompatActivity {
         sb.append("  LoS      : checking terrain…\n");
         binding.hereSection.setText(sb.toString());
 
-        final double antH = 10.0;
+        float antH = SettingsFragment.getAntennaHeightM(this);
         apiService.losCheck(myLat, myLon, target.lat, target.lon, antH, antH,
                 new ApiService.LoSCallback() {
             @Override public void onResult(ApiService.LoSResult r) {

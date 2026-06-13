@@ -49,11 +49,9 @@ public class PinsFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(requireContext()));
         rv.setAdapter(adapter);
         addLongPressDetector(rv, pinList);
-
-        load();
     }
 
-    @Override public void onResume() { super.onResume(); load(); }
+    @Override public void onResume() { super.onResume(); if (pinList.isEmpty()) load(); }
 
     private void load() {
         progressBar.setVisibility(View.VISIBLE);
