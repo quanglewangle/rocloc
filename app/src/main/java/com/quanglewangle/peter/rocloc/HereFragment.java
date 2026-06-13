@@ -59,7 +59,7 @@ public class HereFragment extends Fragment {
     private Button downloadBtn;
     private final ApiService api = new ApiService();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final ExecutorService bgExecutor = Executors.newCachedThreadPool();
+    private ExecutorService bgExecutor;
 
     private FusedLocationProviderClient locationClient;
     private LocationCallback locationCallback;
@@ -67,6 +67,7 @@ public class HereFragment extends Fragment {
     private Marker hereMarker;
     private List<Site> allSites = new ArrayList<>();
     private final List<Polyline> losLines = new ArrayList<>();
+    private final List<Marker> siteMarkers = new ArrayList<>();
     private boolean sitesLoaded = false;
 
     private TerrainStore terrainStore;
@@ -99,6 +100,7 @@ public class HereFragment extends Fragment {
         mapView.getController().setZoom(6.5);
         mapView.getController().setCenter(new GeoPoint(54.5, -3.0));
 
+        bgExecutor    = Executors.newCachedThreadPool();
         terrainStore  = new TerrainStore(requireContext());
         terrainEngine = new TerrainEngine(terrainStore);
 
@@ -133,11 +135,15 @@ public class HereFragment extends Fragment {
         if (!hidden && mapView != null) {
             mapView.invalidate();
             startLocationUpdates();
-            // Clear stale LoS lines from previous visit; redraw once location and sites are ready
             for (Polyline p : losLines) mapView.getOverlays().remove(p);
             losLines.clear();
+            if (sitesLoaded && !SiteCache.get().hasCachedData()) sitesLoaded = false;
+            if (!sitesLoaded) {
+                loadSites();
+            } else if (hereLocation != null) {
+                drawLoS();
+            }
             mapView.invalidate();
-            if (hereLocation != null && sitesLoaded) drawLoS();
         } else if (hidden) {
             stopLocationUpdates();
         }
@@ -211,6 +217,8 @@ public class HereFragment extends Fragment {
                 mainHandler.post(() -> {
                     allSites = sites;
                     sitesLoaded = true;
+                    for (Marker old : siteMarkers) mapView.getOverlays().remove(old);
+                    siteMarkers.clear();
                     for (Site s : allSites) {
                         if (s.lat == 0 && s.lon == 0) continue;
                         Marker m = dotMarker(s.isPin() ? Color.rgb(34, 197, 94) : Color.rgb(239, 107, 34));
@@ -218,6 +226,7 @@ public class HereFragment extends Fragment {
                         m.setTitle(s.displayCallsign());
                         m.setSnippet(s.isPin() ? "Pin" : safe(s.name));
                         mapView.getOverlays().add(m);
+                        siteMarkers.add(m);
                     }
                     progressBar.setVisibility(View.GONE);
                     if (hereLocation != null) drawLoS();

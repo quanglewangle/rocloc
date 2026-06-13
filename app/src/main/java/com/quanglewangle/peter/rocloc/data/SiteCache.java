@@ -51,4 +51,6 @@ public class SiteCache {
     }
 
     public void invalidate() { cached = null; }
+
+    public boolean hasCachedData() { return cached != null; }
 }

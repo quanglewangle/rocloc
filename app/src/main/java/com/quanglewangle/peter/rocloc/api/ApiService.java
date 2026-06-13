@@ -89,14 +89,14 @@ public class ApiService {
         void onError(String error);
     }
 
-    private final OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient CLIENT = new OkHttpClient();
 
     public void lookup(String callsign, Callback callback) {
         Request request = new Request.Builder()
                 .url(BASE_URL + callsign.toUpperCase())
                 .build();
 
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
@@ -133,7 +133,7 @@ public class ApiService {
                 "https://fimblefowl.co.uk/qrz/los?lat1=%f&lon1=%f&lat2=%f&lon2=%f&h1=%.1f&h2=%.1f",
                 lat1, lon1, lat2, lon2, h1, h2);
         Request request = new Request.Builder().url(url).build();
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
             }
@@ -163,7 +163,7 @@ public class ApiService {
         Request request = new Request.Builder()
                 .url("https://fimblefowl.co.uk/qrz/sites")
                 .build();
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
             }
@@ -196,7 +196,7 @@ public class ApiService {
         Request request = new Request.Builder()
                 .url("https://fimblefowl.co.uk/qrz/sites/los/" + callsign.toUpperCase())
                 .build();
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
             }
@@ -228,7 +228,7 @@ public class ApiService {
                 "https://fimblefowl.co.uk/qrz/terrain/tiles?lat=%f&lon=%f&radius_km=%.0f",
                 lat, lon, radiusKm);
         Request request = new Request.Builder().url(url).build();
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
             }
@@ -249,7 +249,7 @@ public class ApiService {
     public void getTerrainTile(String code, TileDataCallback callback) {
         String url = "https://fimblefowl.co.uk/qrz/terrain/tile/" + code.toUpperCase();
         Request request = new Request.Builder().url(url).build();
-        client.newCall(request).enqueue(new okhttp3.Callback() {
+        CLIENT.newCall(request).enqueue(new okhttp3.Callback() {
             @Override public void onFailure(Call call, IOException e) {
                 callback.onError("Network: " + e.getMessage());
             }

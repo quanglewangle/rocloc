@@ -109,6 +109,7 @@ public class MapFragment extends Fragment {
     @Override public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (!hidden && mapView != null) {
+            if (sitesLoaded && !SiteCache.get().hasCachedData()) sitesLoaded = false;
             if (!sitesLoaded) {
                 loadSites(false);
             } else {
