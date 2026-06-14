@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.8 (versionCode 14)
+
+### Bug fixes
+- Fix blank map on Android 15 — opt out of forced edge-to-edge enforcement so system bars remain opaque and the map fragment is correctly sized
+- Bump osmdroid to 6.1.18 for Android 15 (API 35) tile-download compatibility
+
+---
+
 ## v1.7 (versionCode 13)
 
 ### Bug fixes
