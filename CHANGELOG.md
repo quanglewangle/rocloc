@@ -9,6 +9,7 @@
 
 ### Improvements
 - Selected LoS source site now shows a blue dot on top of the orange dot, making the active site clearly visible
+- Pins list now shows the pin name as the primary field with the callsign beneath it, and sorts by name
 
 ---
 
