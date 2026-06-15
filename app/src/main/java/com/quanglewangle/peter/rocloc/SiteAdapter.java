@@ -41,7 +41,7 @@ public class SiteAdapter extends RecyclerView.Adapter<SiteAdapter.ViewHolder> {
         Site s = items.get(position);
         if (s.isPin()) {
             h.callsign.setText(safe(s.name));
-            h.name.setText("");
+            h.name.setText(safe(s.call_sign));
         } else {
             h.callsign.setText(s.displayCallsign());
             h.name.setText(safe(s.name));
