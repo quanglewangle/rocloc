@@ -47,6 +47,7 @@ public class MapFragment extends Fragment {
     private List<Site> allSites = new ArrayList<>();
     private final List<Polyline> losOverlays = new ArrayList<>();
     private RadiusMarkerClusterer clusterOverlay;
+    private Marker losSourceMarker;
     private boolean sitesLoaded = false;
 
     @Nullable @Override
@@ -178,6 +179,7 @@ public class MapFragment extends Fragment {
 
     private void fetchLoS(Site src) {
         clearLoS();
+        setLosSourceMarker(src);
         if (src.call_sign == null || src.call_sign.isEmpty()) return;
         progressBar.setVisibility(View.VISIBLE);
         api.getSitesLoS(src.call_sign, new ApiService.SitesLoSCallback() {
@@ -227,7 +229,30 @@ public class MapFragment extends Fragment {
     private void clearLoS() {
         for (Polyline p : losOverlays) mapView.getOverlays().remove(p);
         losOverlays.clear();
+        if (losSourceMarker != null) {
+            mapView.getOverlays().remove(losSourceMarker);
+            losSourceMarker = null;
+        }
         if (mapView != null) mapView.invalidate();
+    }
+
+    private void setLosSourceMarker(Site site) {
+        if (losSourceMarker != null) mapView.getOverlays().remove(losSourceMarker);
+        float dp = getResources().getDisplayMetrics().density;
+        int outer = (int) (12 * dp);
+        int inner = (int) (6 * dp);
+        Bitmap bmp = Bitmap.createBitmap(outer, outer, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.rgb(239, 107, 34));
+        c.drawCircle(outer / 2f, outer / 2f, outer / 2f, paint);
+        paint.setColor(Color.rgb(59, 130, 246));
+        c.drawCircle(outer / 2f, outer / 2f, inner / 2f, paint);
+        losSourceMarker = new Marker(mapView);
+        losSourceMarker.setIcon(new BitmapDrawable(getResources(), bmp));
+        losSourceMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+        losSourceMarker.setPosition(new GeoPoint(site.lat, site.lon));
+        mapView.getOverlays().add(losSourceMarker);
     }
 
     @Nullable
