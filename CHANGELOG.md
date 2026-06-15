@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.8 (versionCode 14)
+## v1.9 (versionCode 15)
 
 ### Bug fixes
 - Fix blank map on Android 15 — opt out of forced edge-to-edge enforcement so system bars remain opaque and the map fragment is correctly sized
