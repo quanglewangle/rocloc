@@ -6,6 +6,9 @@
 - Fix blank map on Android 15 — opt out of forced edge-to-edge enforcement so system bars remain opaque and the map fragment is correctly sized
 - Bump osmdroid to 6.1.18 for Android 15 (API 35) tile-download compatibility
 
+### Improvements
+- Selected LoS source site now shows a blue dot on top of the orange dot, making the active site clearly visible
+
 ---
 
 ## v1.7 (versionCode 13)
