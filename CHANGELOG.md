@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.10 (versionCode 16)
+
+### Bug fixes
+- Fix Here tab getting stuck on "Location permission needed" with no way to proceed — it now actually requests the permission when tapped, and offers a direct link to the app's Settings page if permission was previously blocked
+
+---
+
 ## v1.9 (versionCode 15)
 
 ### Bug fixes

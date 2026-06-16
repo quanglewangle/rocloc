@@ -1,6 +1,7 @@
 package com.quanglewangle.peter.rocloc;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -8,9 +9,11 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class HereFragment extends Fragment {
 
     private static final double DOWNLOAD_RADIUS_KM = 40;
+    private static final int LOC_REQ = 2001;
 
     private MapView mapView;
     private ProgressBar progressBar;
@@ -154,9 +158,14 @@ public class HereFragment extends Fragment {
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            if (statusText != null) statusText.setText("Location permission needed");
+            if (statusText != null) {
+                statusText.setVisibility(View.VISIBLE);
+                statusText.setText("Location permission needed — tap to grant");
+                statusText.setOnClickListener(v -> requestLocationPermission());
+            }
             return;
         }
+        if (statusText != null) statusText.setOnClickListener(null);
         if (locationCallback != null) return;
 
         locationCallback = new LocationCallback() {
@@ -185,6 +194,34 @@ public class HereFragment extends Fragment {
             locationClient.removeLocationUpdates(locationCallback);
             locationCallback = null;
         }
+    }
+
+    private void requestLocationPermission() {
+        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOC_REQ);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != LOC_REQ) return;
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startLocationUpdates();
+        } else if (statusText != null) {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                statusText.setText("Location permission needed — tap to grant");
+                statusText.setOnClickListener(v -> requestLocationPermission());
+            } else {
+                statusText.setText("Location permission blocked — tap to open Settings");
+                statusText.setOnClickListener(v -> openAppSettings());
+            }
+        }
+    }
+
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", requireContext().getPackageName(), null));
+        startActivity(intent);
     }
 
     private void onLocationUpdate(Location loc, boolean first) {
